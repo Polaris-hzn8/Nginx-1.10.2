@@ -42,7 +42,7 @@ ngx_create_pool(size_t size, ngx_log_t *log)
     return p;
 }
 
-
+// 内存池销毁
 void
 ngx_destroy_pool(ngx_pool_t *pool)
 {
@@ -50,10 +50,10 @@ ngx_destroy_pool(ngx_pool_t *pool)
     ngx_pool_large_t    *l;
     ngx_pool_cleanup_t  *c;
 
+    // 释放外部资源
     for (c = pool->cleanup; c; c = c->next) {
         if (c->handler) {
-            ngx_log_debug1(NGX_LOG_DEBUG_ALLOC, pool->log, 0,
-                           "run cleanup: %p", c);
+            ngx_log_debug1(NGX_LOG_DEBUG_ALLOC, pool->log, 0, "run cleanup: %p", c);
             c->handler(c->data);
         }
     }
@@ -79,13 +79,14 @@ ngx_destroy_pool(ngx_pool_t *pool)
     }
 
 #endif
-
+    // 释放大块内存
     for (l = pool->large; l; l = l->next) {
         if (l->alloc) {
             ngx_free(l->alloc);
         }
     }
 
+    // 释放小块内存
     for (p = pool, n = pool->d.next; /* void */; p = n, n = n->d.next) {
         ngx_free(p);
 
@@ -95,19 +96,21 @@ ngx_destroy_pool(ngx_pool_t *pool)
     }
 }
 
-
+// 内存池重置
 void
 ngx_reset_pool(ngx_pool_t *pool)
 {
     ngx_pool_t        *p;
     ngx_pool_large_t  *l;
 
+    // 大块内存释放
     for (l = pool->large; l; l = l->next) {
         if (l->alloc) {
             ngx_free(l->alloc);
         }
     }
 
+    // 小块内存释放
     for (p = pool; p; p = p->d.next) {
         p->d.last = (u_char *) p + sizeof(ngx_pool_t);
         p->d.failed = 0;
@@ -144,7 +147,7 @@ ngx_pnalloc(ngx_pool_t *pool, size_t size)
     return ngx_palloc_large(pool, size);
 }
 
-
+// 小块内存分配
 static ngx_inline void *
 ngx_palloc_small(ngx_pool_t *pool, size_t size, ngx_uint_t align)
 {
@@ -154,15 +157,17 @@ ngx_palloc_small(ngx_pool_t *pool, size_t size, ngx_uint_t align)
     p = pool->current;
 
     do {
+        // 可分配内存起始地址
         m = p->d.last;
 
+        // 调整起始地址为4或8的整数倍
         if (align) {
             m = ngx_align_ptr(m, NGX_ALIGNMENT);
         }
 
+        // 内存池空间的内存空间 >= 申请的内存空间（高效的内存分配）
         if ((size_t) (p->d.end - m) >= size) {
             p->d.last = m + size;
-
             return m;
         }
 
@@ -173,7 +178,7 @@ ngx_palloc_small(ngx_pool_t *pool, size_t size, ngx_uint_t align)
     return ngx_palloc_block(pool, size);
 }
 
-
+// 创建新内存块（内存不够用）
 static void *
 ngx_palloc_block(ngx_pool_t *pool, size_t size)
 {
@@ -194,10 +199,12 @@ ngx_palloc_block(ngx_pool_t *pool, size_t size)
     new->d.next = NULL;
     new->d.failed = 0;
 
+    // 存储信息减少
     m += sizeof(ngx_pool_data_t);
     m = ngx_align_ptr(m, NGX_ALIGNMENT);
     new->d.last = m + size;
 
+    // 内存块多次分配失败 直接跳过
     for (p = pool->current; p->d.next; p = p->d.next) {
         if (p->d.failed++ > 4) {
             pool->current = p->d.next;
@@ -209,7 +216,7 @@ ngx_palloc_block(ngx_pool_t *pool, size_t size)
     return m;
 }
 
-
+// 大块内存分配
 static void *
 ngx_palloc_large(ngx_pool_t *pool, size_t size)
 {
@@ -224,6 +231,7 @@ ngx_palloc_large(ngx_pool_t *pool, size_t size)
 
     n = 0;
 
+    // 若旧的大块内存已被释放
     for (large = pool->large; large; large = large->next) {
         if (large->alloc == NULL) {
             large->alloc = p;
@@ -235,12 +243,14 @@ ngx_palloc_large(ngx_pool_t *pool, size_t size)
         }
     }
 
+    // 大块内存的头信息 使用小块内存分配的方式进行 分配
     large = ngx_palloc_small(pool, sizeof(ngx_pool_large_t), 1);
     if (large == NULL) {
         ngx_free(p);
         return NULL;
     }
 
+    // 建立大块内存链表结点
     large->alloc = p;
     large->next = pool->large;
     pool->large = large;
@@ -273,7 +283,7 @@ ngx_pmemalign(ngx_pool_t *pool, size_t size, size_t alignment)
     return p;
 }
 
-
+// 大块内存释放
 ngx_int_t
 ngx_pfree(ngx_pool_t *pool, void *p)
 {
@@ -307,12 +317,13 @@ ngx_pcalloc(ngx_pool_t *pool, size_t size)
     return p;
 }
 
-
+// 内存池外部资源释放
 ngx_pool_cleanup_t *
 ngx_pool_cleanup_add(ngx_pool_t *p, size_t size)
 {
     ngx_pool_cleanup_t  *c;
 
+    // 存储头信息（小块内存池）
     c = ngx_palloc(p, sizeof(ngx_pool_cleanup_t));
     if (c == NULL) {
         return NULL;
@@ -323,11 +334,12 @@ ngx_pool_cleanup_add(ngx_pool_t *p, size_t size)
         if (c->data == NULL) {
             return NULL;
         }
-
+        
     } else {
         c->data = NULL;
     }
 
+    // 回调函数成链
     c->handler = NULL;
     c->next = p->cleanup;
 
