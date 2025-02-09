@@ -31,12 +31,12 @@ typedef struct {
 } ngx_memtest_data_t;
 
 void ngx_memtest_free(char *p) {
-	printf("ngx_memtest_free free ptr memory!");
+	printf("ngx_memtest_free free ptr memory!\n");
 	free(p);
 }
 
 void ngx_memtest_fclose(FILE *file) {
-	printf("ngx_memtest_fclose close file.");
+	printf("ngx_memtest_fclose close file.\n");
 	fclose(file);
 }
 
@@ -67,7 +67,7 @@ void main()
 	// 大块内存外部资源分配
 	ptr_l->ptr = malloc(12);
 	strcpy(ptr_l->ptr, "hello world");
-	ptr_l->file = fopen("ngx_memtest_data.txt", "rw");
+	ptr_l->file = fopen("ngx_memtest_data.txt", "w");
 
 	// 大块内存外部资源释放
 	ngx_pool_cleanup_t *cl1 = ngx_pool_cleanup_add(pool, sizeof(char*));

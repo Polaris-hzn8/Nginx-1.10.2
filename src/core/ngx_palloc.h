@@ -48,7 +48,6 @@ struct ngx_pool_large_s {
     void                 *alloc;
 };
 
-
 typedef struct {
     u_char               *last;
     u_char               *end;
