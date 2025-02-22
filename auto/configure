@@ -2,11 +2,14 @@
 
 # Copyright (C) Igor Sysoev
 # Copyright (C) Nginx, Inc.
+# 用于配置和编译Nginx的自动化脚本
 
-
+# 设置环境变量 LC_ALL = C
+# 确保脚本执行过程中使用一致的语言和字符集设置
 LC_ALL=C
 export LC_ALL
 
+# 1.加载配置文件和初始化脚本
 . auto/options
 . auto/init
 . auto/sources
@@ -18,12 +21,13 @@ echo > $NGX_AUTOCONF_ERR
 
 echo "#define NGX_CONFIGURE \"$NGX_CONFIGURE\"" > $NGX_AUTO_CONFIG_H
 
-
+# 宏定义输出到文件中 auto_config
 if [ $NGX_DEBUG = YES ]; then
     have=NGX_DEBUG . auto/have
 fi
 
-
+# 2.检查操作系统信息（系统名称、版本、机器类型）
+# 根据检测到的信息确定平台标识符 NGX_PLATFORM
 if test -z "$NGX_PLATFORM"; then
     echo "checking for OS"
 
@@ -46,14 +50,17 @@ else
     NGX_SYSTEM=$NGX_PLATFORM
 fi
 
+# 3.加载与C编译器相关的配置
+# 编译器选项
 . auto/cc/conf
-
 if [ "$NGX_PLATFORM" != win32 ]; then
     . auto/headers
 fi
 
+# 头文件支持宏定义
 . auto/os/conf
 
+# Unix系统下的通用配置检测
 if [ "$NGX_PLATFORM" != win32 ]; then
     . auto/unix
 fi
@@ -62,6 +69,8 @@ fi
 . auto/modules
 . auto/lib/conf
 
+# 4.定义Nginx安装路径相关的宏
+# 包括 NGX_PREFIX、NGX_CONF_PATH、NGX_PID_PATH
 case ".$NGX_PREFIX" in
     .)
         NGX_PREFIX=${NGX_PREFIX:-/usr/local/nginx}
@@ -99,8 +108,12 @@ have=NGX_HTTP_UWSGI_TEMP_PATH value="\"$NGX_HTTP_UWSGI_TEMP_PATH\""
 have=NGX_HTTP_SCGI_TEMP_PATH value="\"$NGX_HTTP_SCGI_TEMP_PATH\""
 . auto/define
 
+# 5.处理模块定义、库文件链接以及生成 Makefile
+# 生成objs\makefile文件
 . auto/make
+# 生成关于库的编译选项到makefile文件
 . auto/lib/make
+# 生成与安装相关的makefile文件内容 并生成最外层的makefile文件
 . auto/install
 
 # STUB
@@ -113,4 +126,5 @@ if [ ".$NGX_BUILD" != "." ]; then
     have=NGX_BUILD value="\"$NGX_BUILD\"" . auto/define
 fi
 
+# 6.最终生成汇总报告 显示配置摘要
 . auto/summary

@@ -1,8 +1,11 @@
 
 # Copyright (C) Igor Sysoev
 # Copyright (C) Nginx, Inc.
+# 为不同的操作系统和模块定义 源文件、头文件
+# 编译链接和构建 Nginx 的各个模块以及平台特定的功能 
 
-
+#########################################
+# 核心模块
 CORE_MODULES="ngx_core_module ngx_errlog_module ngx_conf_module"
 
 CORE_INCS="src/core"
@@ -79,7 +82,8 @@ CORE_SRCS="src/core/nginx.c \
            src/core/ngx_proxy_protocol.c \
            src/core/ngx_syslog.c"
 
-
+#########################################
+# 事件模块
 EVENT_MODULES="ngx_events_module ngx_event_core_module"
 
 EVENT_INCS="src/event src/event/modules"
@@ -97,32 +101,37 @@ EVENT_SRCS="src/event/ngx_event.c \
             src/event/ngx_event_connect.c \
             src/event/ngx_event_pipe.c"
 
-
+#########################################
+# 操作系统特定的时间处理模型
+# select
 SELECT_MODULE=ngx_select_module
 SELECT_SRCS=src/event/modules/ngx_select_module.c
 WIN32_SELECT_SRCS=src/event/modules/ngx_win32_select_module.c
-
+# poll
 POLL_MODULE=ngx_poll_module
 POLL_SRCS=src/event/modules/ngx_poll_module.c
-
+# kqueue
 KQUEUE_MODULE=ngx_kqueue_module
 KQUEUE_SRCS=src/event/modules/ngx_kqueue_module.c
-
+# devpoll
 DEVPOLL_MODULE=ngx_devpoll_module
 DEVPOLL_SRCS=src/event/modules/ngx_devpoll_module.c
-
+# eventport
 EVENTPORT_MODULE=ngx_eventport_module
 EVENTPORT_SRCS=src/event/modules/ngx_eventport_module.c
-
+# Linux - epoll 高效的异步IO机制
 EPOLL_MODULE=ngx_epoll_module
 EPOLL_SRCS=src/event/modules/ngx_epoll_module.c
-
+# Windows - iocp 高效的异步IO机制
 IOCP_MODULE=ngx_iocp_module
 IOCP_SRCS=src/event/modules/ngx_iocp_module.c
 
+# 文件异步IO的源代码
 FILE_AIO_SRCS="src/os/unix/ngx_file_aio_read.c"
 LINUX_AIO_SRCS="src/os/unix/ngx_linux_aio_read.c"
 
+#########################################
+# Unix平台下源码文件
 UNIX_INCS="$CORE_INCS $EVENT_INCS src/os/unix"
 
 UNIX_DEPS="$CORE_DEPS $EVENT_DEPS \
@@ -179,6 +188,7 @@ UNIX_SRCS="$CORE_SRCS $EVENT_SRCS \
 
 POSIX_DEPS=src/os/unix/ngx_posix_config.h
 
+# Linux下线程池模块
 THREAD_POOL_MODULE=ngx_thread_pool_module
 THREAD_POOL_DEPS=src/core/ngx_thread_pool.h
 THREAD_POOL_SRCS="src/core/ngx_thread_pool.c
@@ -186,6 +196,7 @@ THREAD_POOL_SRCS="src/core/ngx_thread_pool.c
                   src/os/unix/ngx_thread_mutex.c
                   src/os/unix/ngx_thread_id.c"
 
+# FreeBSD 操作系统相关配置与头文件
 FREEBSD_DEPS="src/os/unix/ngx_freebsd_config.h src/os/unix/ngx_freebsd.h"
 FREEBSD_SRCS=src/os/unix/ngx_freebsd_init.c
 FREEBSD_SENDFILE_SRCS=src/os/unix/ngx_freebsd_sendfile_chain.c
@@ -194,7 +205,7 @@ LINUX_DEPS="src/os/unix/ngx_linux_config.h src/os/unix/ngx_linux.h"
 LINUX_SRCS=src/os/unix/ngx_linux_init.c
 LINUX_SENDFILE_SRCS=src/os/unix/ngx_linux_sendfile_chain.c
 
-
+# Solaris 操作系统相关配置与头文件
 SOLARIS_DEPS="src/os/unix/ngx_solaris_config.h src/os/unix/ngx_solaris.h"
 SOLARIS_SRCS=src/os/unix/ngx_solaris_init.c
 SOLARIS_SENDFILEV_SRCS=src/os/unix/ngx_solaris_sendfilev_chain.c
@@ -204,7 +215,8 @@ DARWIN_DEPS="src/os/unix/ngx_darwin_config.h src/os/unix/ngx_darwin.h"
 DARWIN_SRCS=src/os/unix/ngx_darwin_init.c
 DARWIN_SENDFILE_SRCS=src/os/unix/ngx_darwin_sendfile_chain.c
 
-
+#########################################
+# Windows平台下源码文件
 WIN32_INCS="$CORE_INCS $EVENT_INCS src/os/win32"
 
 WIN32_DEPS="$CORE_DEPS $EVENT_DEPS \

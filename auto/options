@@ -169,6 +169,7 @@ NGX_POST_CONF_MSG=
 
 opt=
 
+# 处理每个输入的选项值 并设置到对应的全局变量中
 for option
 do
     opt="$opt `echo $option | sed -e \"s/\(--[^=]*=\)\(.* .*\)/\1'\2'/\"`"
@@ -363,7 +364,8 @@ done
 
 NGX_CONFIGURE="$opt"
 
-
+# 针对用户输入的选项进行处理
+# 输出帮助信息
 if [ $help = yes ]; then
 
 cat << END
@@ -556,7 +558,7 @@ if [ ".$NGX_PLATFORM" = ".win32" ]; then
     NGX_WINE=$WINE
 fi
 
-
+# 默认文件路径
 NGX_SBIN_PATH=${NGX_SBIN_PATH:-sbin/nginx}
 NGX_MODULES_PATH=${NGX_MODULES_PATH:-modules}
 NGX_CONF_PATH=${NGX_CONF_PATH:-conf/nginx.conf}
